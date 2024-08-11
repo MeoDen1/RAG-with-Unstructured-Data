@@ -1,0 +1,7 @@
+# Data
+/csv
+/doc
+/model
+
+# Environments
+.env
