@@ -7,9 +7,9 @@ from transformers import AutoTokenizer, AutoModel
 from dotenv import load_dotenv
 import google.generativeai as genai
 
-# NOTE: .env contain API_KEY field
+# NOTE: require .env contain API_KEY for google generative ai key
 
-# This is just a clear structure of simple RAG. Go to notebook_v1 for more detail
+# This is just a clear structure of simple RAG. Go to build.ipynb for more detail
 
 load_dotenv()
 
