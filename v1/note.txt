@@ -1,5 +1,0 @@
-v1: Retrieval Augmented Generation (RAG) from scratch
-
-Chunking method: Fixed size Chunking
-Database: save and load data through .csv
-Search method: cosine similarity
