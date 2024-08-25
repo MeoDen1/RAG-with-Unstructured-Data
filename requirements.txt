@@ -6,3 +6,5 @@ pymupdf
 textblob
 langchain-text-splitters
 langchain_community
+import spacy
+import pytextrank

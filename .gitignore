@@ -2,8 +2,6 @@
 /csv
 /doc
 /model
-/data
-/learning
 
 # Environments
 .env
