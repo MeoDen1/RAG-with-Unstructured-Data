@@ -12,7 +12,11 @@ This is a simple Retrieval Augmented Generation architecture from scratch, using
 
 - **Chunk method**: Character Text Chunking
 
+- **Embedding model**: BAAI/bge-small-en-v1.5
+
 - **Searching**: Using consine-similarly ranking
+
+- **LLM**: Gemini 
 
 **Result**:
 
@@ -29,7 +33,11 @@ For the second system, knowledge graph has been applied in order to retrieve mor
 
 - **Chunk method**: Character Text Chunking
 
+- **Embedding model**: Gemini Embedding model
+
 - **Database structure**: The database structure is a combination of graphs and vectors, allowing to perform similarity search but also present relationship in the data.
+
+- **LLM**: Gemini
 
 ![alt text](.resources/v2graph.png)
 
@@ -39,7 +47,7 @@ For the second system, knowledge graph has been applied in order to retrieve mor
 
 - The Chunk node has a `PART_OF` relationship to the Doc node, indicating which document the chunk belongs to.
 
-- Each chunk will have a `next` relationship, pointing to the next chunk in document flow (like Linked List) 
+- Each chunk will have a `NEXT` relationship, pointing to the next chunk in document flow (like Linked List) 
 
 **Result**:
 
