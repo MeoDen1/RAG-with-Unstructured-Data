@@ -2,6 +2,8 @@
 /csv
 /doc
 /model
+/v3/__pycache__
+/v3/prompts/__pycache__
 
 # Environments
 .env

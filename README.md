@@ -31,7 +31,7 @@ For the second system, knowledge graph has been applied in order to retrieve mor
 
 - **Database structure**: The database structure is a combination of graphs and vectors, allowing to perform similarity search but also present relationship in the data.
 
-![alt text](readme/image.png)
+![alt text](.resources/v2graph.png)
 
 - `Doc`: Document Node containing *title* (name of document) and *author* (author of that document) properties.
 
