@@ -1,5 +1,6 @@
-from prompts import graph_extractor_prompts
+from prompts import graph_extractor_prompts, summarize_prompts
 from LLM import LLM
+import json
 
 DEFAULT_TUPLE_DELIMITER = "<TD>"
 DEFAULT_RECORD_DELIMITER = "<RD>"
@@ -16,9 +17,14 @@ class GraphExtractor:
     "source_entity\<TD\>target_entity": description
 
     """
+    # Private
     def __init__(self, llm: LLM) -> None:
         self.__llm = llm
-        self.data: dict[str, list[str]] = {}
+        self.temp: dict[str, list[str]] = {}
+        # Data is stored in JSON format
+        self.data = []
+        self.error_count = 0
+        
 
     def __create_graph_prompt(self, input_text: str) -> str:
         return graph_extractor_prompts.get_prompt(
@@ -29,9 +35,28 @@ class GraphExtractor:
             DEFAULT_COMPLETION_DELIMITER
         )
     
+    def __create_summarize_prompt(self, entity_name: str | list[str], description_list: list[str]) -> str:
+        return summarize_prompts.get_prompt(
+            entity_name, description_list
+        )
+    
+    def __entity_json_format(self, entity_name, entity_type, description):
+        return {
+            "entity_name": entity_name,
+            "entity_type": entity_type,
+            "description": description
+        }
+    
+    def __relationship_json_format(self, source_entity, target_entity, description):
+        return {
+            "source_entity": source_entity,
+            "target_entity": target_entity,
+            "description": description
+        }
+    
     def __preprocess(self, result: str):
         """
-        Preprocess result and store in class total data. 
+        Preprocess result and store in class total temp. 
 
         The *entity* is merged by name and type, while the *relationship* is merged by pair of entities
         """
@@ -46,23 +71,67 @@ class GraphExtractor:
             # obj, entity_name, entity_type, entity_description = parts
             # obj, source_entity, target_entity, description, strength = parts
 
-            key = f"{parts[1]}{DEFAULT_TUPLE_DELIMITER}{parts[2]}"
-
-            # Initialize node if not exists
-            if key not in self.data.keys():
-                self.data[key] = []
-
-            self.data[key].append(parts[3])
-
-    def __summarize(self):
-        """
-        Summarize description of merged node
-        """
-        for item in self.data.items():
-            if len(item[1]) == 1:
+            # In case the model fails to follow instruction
+            if len(parts) != 4 and len(parts) != 5:
+                print(f"Error encounter: {record} \n")
+                self.error_count += 1
                 continue
 
+            # Make sure there are all upper
+            key = f"{parts[0].upper()}{DEFAULT_TUPLE_DELIMITER}{parts[1].upper()}{DEFAULT_TUPLE_DELIMITER}{parts[2].upper()}"
+
+            # Initialize node if not exists
+            if key not in self.temp.keys():
+                self.temp[key] = []
+
+            self.temp[key].append(parts[3])
+
+
+    #############################
+    # Public
+    def summarize(self, cooldown=1):
+        """
+        Merge all duplicated entities and relationships 
+        """
+        for item in self.temp.items():
             # Call llm to summarize
+
+            parts = item[0].split(DEFAULT_TUPLE_DELIMITER)
+
+            obj, key1, key2 = parts 
+            # ["ENTITY", entity_name, entity_type] | 
+            # ["RELATIONSHIP", source_entity, target_entity]
+
+            entity_name = [key1, key2]
+            if obj == "ENTITY":
+                entity_name = key1
+
+
+            # If the obj only has 1 description then skip summarization
+            summarized = item[1][0]
+
+            if len(item[1]) > 1:
+                prompt = self.__create_summarize_prompt(entity_name, item[1])
+                # In-case of safety setting
+                try:
+                    summarized = self.__llm.generate(prompt, cooldown)
+                except Exception as error:
+                    print(f"Error: {error} \n\n-Key: {entity_name} \n-Description: {item[1]} \n")
+
+            if obj == "ENTITY":
+                self.data.append(self.__entity_json_format(key1, key2, summarized))
+            else:
+                self.data.append(self.__relationship_json_format(key1, key2, summarized))
+
+
+    def save_data(self, json_path: str):
+        """
+        Save data in JSON format
+        """
+        with open(json_path, 'w') as fp:
+            json.dump(self.data, fp)
+
+        print("File is successfully saved at: %s" % json_path)
 
 
     
@@ -78,16 +147,22 @@ class GraphExtractor:
         """
         # Get llm extraction response 
         prompt = self.__create_graph_prompt(text)
-        result = self.__llm.generate(prompt)
+        result = ""
 
         # Check if the model has finished the extraction
-        attempt = 1
-        while not result.find(DEFAULT_COMPLETION_DELIMITER):
+        attempt = 0
+        while result.find(DEFAULT_COMPLETION_DELIMITER) == -1:
             if attempt > attempt_limit:
-                raise NameError(f"Model failed to extract information from: \n{text}\n")
+                print(f"Model failed to extract information from: \n{text}\n")
+                return ""
             
-            result = self.__llm.generate(prompt)
             attempt += 1
+            
+            try:
+                result = self.__llm.generate(prompt)
+            except:
+                continue
+            
 
         result = result.replace(DEFAULT_COMPLETION_DELIMITER, '')
 

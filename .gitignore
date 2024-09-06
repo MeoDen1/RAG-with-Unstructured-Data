@@ -1,6 +1,7 @@
 # Data
 /csv
-/doc
+doc/*
+!doc/pg24022.txt
 /model
 /v3/__pycache__
 /v3/prompts/__pycache__

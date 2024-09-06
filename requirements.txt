@@ -6,5 +6,8 @@ pymupdf
 textblob
 langchain-text-splitters
 langchain_community
-import spacy
-import pytextrank
+spacy
+openai
+google-generativeai
+tiktoken
+neo4j
