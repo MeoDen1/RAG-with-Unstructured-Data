@@ -1,8 +1,8 @@
-# Building RAG system from Unstructured data
+# Retrieval Augmented Generation
 
-This is a research project aimed to create an efficient system for RAG which capable of retrieving information from unstructured data while maintaining high performance and accuracy when retrieving.
+This is a research project aimed to create an efficient RAG system for different purposes, providing different approachs to create high performance, accuracy and fully detailed retrieval information system.
 
-Currently, the project is built to handle documents in text format (PDFs, Markdown, text, ...). The documents include books and articles from various categorical fields. Since the documents are from different sources and not sharing a common structure, this presents challenges in processing, extraction and designing database structure.
+Currently, the project is built to handle documents in text format (PDFs, Markdown, text, ...). The documents include books and articles from various categorical fields. 
 
 All the detail of development of each version is inside **build.ipynb**
 
@@ -65,4 +65,4 @@ Different from traditional RAG approach, which getting answer from relevant chun
 
 With this approach, the system can provided more complete and detailed information from a large dataset or data collection. In traditional RAG system, the most relevant chunks to the query are retrieved for LLM. However, those relevant chunks are not always able to form a fully needed information, especially in larger dataset. Beside, those chunks may provide partial information, while some chunks are totally irrelevant to the main point of the question. 
 
-This implementation version is based on the paper's pipeline. However, unlike the [GraphRAG](https://github.com/microsoft/graphrag) source code which uses tables for data storage, this version utitlized Neo4j Graph Database, enhancing scalability and efficiency in graph operation.
+This implementation version is based on the paper's pipeline. However, unlike the [GraphRAG](https://github.com/microsoft/graphrag) source code which uses tables for data storage, this version utitlized Neo4j Graph Database, enhancing scalability and efficiency in graph operation. 
