@@ -6,7 +6,7 @@ Currently, the project is built to handle documents in text format (PDFs, Markdo
 
 All the detail of development of each version is inside **build.ipynb**
 
-> ## System v1
+## System v1
 
 This is a simple Retrieval Augmented Generation architecture from scratch, using list as a vector store.
 
@@ -27,7 +27,7 @@ The model was able to retrieved information from vector store. However, there ar
 
 <br>
 
-> ## System v2
+## System v2
 
 For the second system, knowledge graph has been applied in order to retrieve more information and relationship between each chunk (using Neo4j Cypher as graph database)
 
@@ -54,3 +54,15 @@ For the second system, knowledge graph has been applied in order to retrieve mor
 The model was able to retrieve information from the database, and additional data was provided by including neighboring chunks of the top-scoring chunks. However, as more documents are added to the database, performance and accuracy decline. This is due to the current preprocessing and chunking methods being too simple, which limits the ability to improve the database structure.
 
 <br>
+
+## System v3
+
+The system v3 is a re-implementation of [Microsoft GraphRAG](https://microsoft.github.io/graphrag/) and also from research paper: [From Local to Global: A Graph RAG Approach to Query-Focused Summarization](https://arxiv.org/abs/2404.16130). 
+
+Different from traditional RAG approach, which getting answer from relevant chunks in the vector-store, the paper has provided a approach which using LLMs to create a knowledge graph based on an input corpus. The LLMs fist to identify the entities and relationships throughout the document, then generate a community summaries for all groups of closely-related entities. When a user enters a query, each community summary is used generate a partial answer, then all partial answers are aggregated into a final answer.
+
+![image](.resources/Query-Focused-Summarization.png)
+
+With this approach, the system can provided more complete and detailed information from a large dataset or data collection. In traditional RAG system, the most relevant chunks to the query are retrieved for LLM. However, those relevant chunks are not always able to form a fully needed information, especially in larger dataset. Beside, those chunks may provide partial information, while some chunks are totally irrelevant to the main point of the question. 
+
+This implementation version is based on the paper's pipeline. However, unlike the [GraphRAG](https://github.com/microsoft/graphrag) source code which uses tables for data storage, this version utitlized Neo4j Graph Database, enhancing scalability and efficiency in graph operation.
