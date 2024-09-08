@@ -11,3 +11,4 @@ openai
 google-generativeai
 tiktoken
 neo4j
+llama-index

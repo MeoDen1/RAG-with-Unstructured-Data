@@ -1,6 +1,8 @@
 from prompts import graph_extractor_prompts, summarize_prompts
 from LLM import LLM
 import json
+import cypher_query as cq
+import time
 
 DEFAULT_TUPLE_DELIMITER = "<TD>"
 DEFAULT_RECORD_DELIMITER = "<RD>"
@@ -103,9 +105,8 @@ class GraphExtractor:
             # ["RELATIONSHIP", source_entity, target_entity]
 
             entity_name = [key1, key2]
-            if obj == "ENTITY":
+            if obj == "\"ENTITY\"" or key2.lower() in DEFAULT_ENTITY_TYPES:
                 entity_name = key1
-
 
             # If the obj only has 1 description then skip summarization
             summarized = item[1][0]
@@ -114,11 +115,13 @@ class GraphExtractor:
                 prompt = self.__create_summarize_prompt(entity_name, item[1])
                 # In-case of safety setting
                 try:
-                    summarized = self.__llm.generate(prompt, cooldown)
+                    summarized = self.__llm.generate(prompt)
                 except Exception as error:
                     print(f"Error: {error} \n\n-Key: {entity_name} \n-Description: {item[1]} \n")
 
-            if obj == "ENTITY":
+                time.sleep(cooldown)
+
+            if isinstance(entity_name, str):
                 self.data.append(self.__entity_json_format(key1, key2, summarized))
             else:
                 self.data.append(self.__relationship_json_format(key1, key2, summarized))
@@ -171,6 +174,88 @@ class GraphExtractor:
 
         return result
     
+
+
+from langchain_community.graphs import Neo4jGraph 
+from dotenv import load_dotenv
+from prompts import community_summarize_prompts
+import os
+
+
+
+class CommunityExtractor:
+    def __init__(self, llm: LLM):
+        load_dotenv()
+
+        NEO4J_URL = os.getenv('NEO4J_URL')
+        NEO4J_USERNAME = os.getenv('NEO4J_USERNAME')
+        NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD')
+        NEO4J_DATABASE = os.getenv('NEO4J_DATABASE')
+
+        self.__llm = llm
+        try:
+            self.__kg = Neo4jGraph(NEO4J_URL, NEO4J_USERNAME, NEO4J_PASSWORD, NEO4J_DATABASE)
+            
+        except Exception as excpt:
+            raise NameError(f"Failed to initialize Neo4jGraph. \nError: {excpt}\n")
+
+    def __create_community_summarize_prompt(self, entity_info: list[str], relationship_info: list[str]):
+        return community_summarize_prompts.get_prompt(
+            entity_info, relationship_info
+        )
+
+    def __preprocess(self, community_id: int, result: str):
+        data = json.loads(result)
+        
+        # Only load title & summary
+        title, summary, rating, rating_explanation = data["title"], data["summary"], data['rating'], data['rating_explanation']
+
+        cq.create_community(self.__kg, community_id, title, summary, float(rating), rating_explanation)
+
+
+
+    def extract(self, graph_name: str, attempt_limit: int = 5):
+        """
+        Detect and summarize communities from `graph_name`. Each community will be stored in community node
+        """
+        cq.generate_communities(self.__kg, graph_name)
+
+        # Retrieve list of community id
+        cid = cq.get_list_community(self.__kg)
+
+        for id in cid:
+            entities, relationships = cq.get_community_info(self.__kg, id)
+
+            # Community Summarize
+            prompt = self.__create_community_summarize_prompt(entities, relationships)
+            result = ""
+            attempt = 0
+
+            while result.find('"title"') == -1 and attempt <= attempt_limit:                    
+                attempt += 1
+                try:
+                    result = self.__llm.generate(prompt)
+                except Exception as exp:
+                    print(f"Error: {exp}\n-Community ID: {id}")
+
+            if attempt > attempt_limit:
+                print(f"Failed to extract summary from community {id}")
+                continue
+
+            self.__preprocess(id, result)
+
+            
+
+        
+
+
+
+
+
+
+
+
+
 
 
 

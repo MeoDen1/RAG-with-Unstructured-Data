@@ -3,7 +3,6 @@ import os
 import time
 from openai import OpenAI
 import google.generativeai as genai
-from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
 
 
@@ -15,7 +14,7 @@ class LLM:
         load_dotenv()
         pass
 
-    def generate(self, prompt: str, cooldown: int) -> str:
+    def generate(self, prompt: str) -> str:
         """
         Generate LLM's response from `prompt` text
         """
@@ -27,7 +26,7 @@ class GeminiModel(LLM):
     """
     Gemini model
     """
-    def __init__(self, model_name="gemini-1.0-pro-latest") -> None:
+    def __init__(self, model_name="gemini-1.5-flash-001") -> None:
         super().__init__()
         GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
         # Check if api key is valid
@@ -36,9 +35,7 @@ class GeminiModel(LLM):
         genai.configure(api_key=GOOGLE_API_KEY)
         self.__gen_model = genai.GenerativeModel(model_name)
 
-    def generate(self, prompt: str, cooldown=1) -> str:
-        # Cooldown request
-        time.sleep(cooldown)
+    def generate(self, prompt: str) -> str:
         
         reponse = self.__gen_model.generate_content(prompt)
 
